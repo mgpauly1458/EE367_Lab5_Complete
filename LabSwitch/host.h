@@ -33,4 +33,10 @@ struct job_queue {
 
 void host_main(int host_id);
 
+// Functions to use from host.c
+void job_q_add(struct job_queue *j_q, struct host_job *j);
+void job_q_init(struct job_queue *j_q);
+int job_q_num(struct job_queue *j_q);
+struct host_job *job_q_remove(struct job_queue *j_q);
+
 

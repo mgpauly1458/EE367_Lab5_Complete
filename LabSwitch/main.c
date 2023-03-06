@@ -11,7 +11,7 @@
 #include "net.h"
 #include "man.h"
 #include "host.h"
-
+#include "switch.h"
 
 void main()
 {
@@ -47,7 +47,8 @@ for (p_node = node_list; p_node != NULL; p_node = p_node->next) {
 		}
 		else if (p_node->type = SWITCH) {
 			/* Execute switch routine, which you have to write */
-		}
+		   switch_main(p_node->id);
+      }
 		return;
 	}  
 }
