@@ -343,6 +343,21 @@ while(1) {
 				job_q_add(&job_q, new_job);
 					
 				break;
+
+         case 'd': /* Download a file from a host to current host */
+            sscanf(man_msg, "%d %d", &dst, name);  // Get the cmd string from the manager
+            new_job = (struct host_job *) malloc(sizeof(struct host_job));
+            new_job->type = JOB_FILE_DOWNLOAD_SEND;
+            new_job->file_download_src = dst;      // The dst is where we are getting the file from in this case
+            new_job->file_upload_dst = host_id;    // Current host_id is where we are uploading the file 
+            // Store filename in the fname_upload member of the new job
+            for (i=0; name[i] != '\0'; i++) {
+               new_job->fname_upload[i] = name[i];
+            }
+            new_job->fname_upload[i] = '\0';    // Null terminate the filename for larger packet sizes
+            job_q_add(&job_q, new_job);         // Add the new download job to the queue
+            break;
+
 			default:
 			;
 		}
@@ -406,6 +421,17 @@ while(1) {
 						= JOB_FILE_UPLOAD_RECV_END;
 					job_q_add(&job_q, new_job);
 					break;
+            /*
+             * The next packet is for the download file operation
+             * The download packet is the packet that the current host sends to the host where the file is
+             * If a host receives a download packet it is being asked to send one out
+             * Its src is itself, dst is the current host, and payload is the file
+             */
+            case (char) PKT_FILE_DOWNLOAD:
+               new_job->type = JOB_FILE_DOWNLOAD_RECV;   
+               job_q_add(&job_q, new_job);   
+               break;
+               
 				default:
 					free(in_packet);
 					free(new_job);
@@ -591,6 +617,48 @@ while(1) {
 			free(new_job->packet);
 			free(new_job);
 			break;
+
+      case JOB_FILE_DOWNLOAD_SEND:
+         // Create a packet to rqeuest for a given file from another node
+         new_packet = (struct packet *) 
+						malloc(sizeof(struct packet));
+			new_packet->dst = new_job->file_download_src; // Dst is the node that has the download
+			new_packet->src = (char) host_id;   // Src is the current node that does the request
+			new_packet->type = PKT_FILE_DOWNLOAD;
+			for (i=0; new_job->fname_upload[i]!= '\0'; i++) {
+            new_packet->payload[i] = new_job->fname_upload[i];
+         }
+         // Null terminate the payload for sending multiple packets
+         new_packet->payload[i] = '\0';   
+			new_packet->length = i;    // Not packet length includes the null termination
+         // Create a job to send the download request packet
+         new_job2 = (struct host_job *)malloc(sizeof(host_job));
+         new_job2->type = JOB_SEND_PKT_ALL_PORTS;
+         new_job2->packet = new_packet;
+         job_q_add(&job_q, new_job2);
+         // Free the original job
+         free(new_job);
+         break;
+
+      case JOB_FILE_DOWNLOAD_RECV:
+         /*
+          * Receive a filename and create a upload file job to upload the filename (from the 
+          * current working directory) to the dst
+          * The dst is the source of the download request packet
+         */
+         // Create a job to upload the matching file to the requesting host
+         new_job2 = (struct host_job *)malloc(sizeof(host_job));
+         new_job2->type = JOB_FILE_UPLOAD_SEND;
+         new_job2->file_upload_dst = new_job->packet->src;
+         for (i=0; new_job->packet->payload[i] != '\0'; i++) {
+            new_job2->fname_upload[i] = new_job->packet->payload[i];
+         }
+         // Add the null terminating bit
+         new_job2->fname_upload[i] = '\0';
+         job_q_add(&job_q, new_job2);
+         // Free the extra job memory
+         free(new_job);
+         break;
 
 		case JOB_FILE_UPLOAD_RECV_END:
 

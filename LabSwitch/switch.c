@@ -98,8 +98,8 @@ while(1)
       in_packet = (struct packet*)malloc(sizeof(struct packet)); // Allocate space
       n = packet_recv(node_port[k], in_packet); // Receive packet from the current port
       
-      // Check if the packet was received
-      if (n > 0) {
+      // Check if the packet was received and is for switch node
+      if (n > 0 && (int)in_packet->dst == switch_id) {
          new_job = (struct host_job *)malloc(sizeof(struct host_job));
          new_job->packet = in_packet;
          new_job->in_port_index = k;  

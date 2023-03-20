@@ -9,7 +9,9 @@ enum host_job_type {
 	JOB_PING_WAIT_FOR_REPLY,
 	JOB_FILE_UPLOAD_SEND,
 	JOB_FILE_UPLOAD_RECV_START,
-	JOB_FILE_UPLOAD_RECV_END
+	JOB_FILE_UPLOAD_RECV_END,
+   JOB_FILE_DOWNLOAD_SEND,
+   JOB_FILE_DOWNLOAD_RECV
 };
 
 struct host_job {
@@ -22,6 +24,7 @@ struct host_job {
 	int ping_timer;
 	int file_upload_dst;
 	struct host_job *next;
+   int file_download_src;
 };
 
 
