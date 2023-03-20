@@ -632,7 +632,7 @@ while(1) {
          new_packet->payload[i] = '\0';   
 			new_packet->length = i;    // Not packet length includes the null termination
          // Create a job to send the download request packet
-         new_job2 = (struct host_job *)malloc(sizeof(host_job));
+         new_job2 = (struct host_job *)malloc(sizeof(struct host_job));
          new_job2->type = JOB_SEND_PKT_ALL_PORTS;
          new_job2->packet = new_packet;
          job_q_add(&job_q, new_job2);
@@ -647,7 +647,7 @@ while(1) {
           * The dst is the source of the download request packet
          */
          // Create a job to upload the matching file to the requesting host
-         new_job2 = (struct host_job *)malloc(sizeof(host_job));
+         new_job2 = (struct host_job *)malloc(sizeof(struct host_job));
          new_job2->type = JOB_FILE_UPLOAD_SEND;
          new_job2->file_upload_dst = new_job->packet->src;
          for (i=0; new_job->packet->payload[i] != '\0'; i++) {
