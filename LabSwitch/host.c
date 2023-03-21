@@ -210,12 +210,96 @@ return j_q->occ;
  *  Main 
  */
 
+const char* get_job_type_string(int job_type) {
+    switch (job_type) {
+        case JOB_SEND_PKT_ALL_PORTS:
+            return "JOB_SEND_PKT_ALL_PORTS";
+        case JOB_PING_SEND_REQ:
+            return "JOB_PING_SEND_REQ";
+        case JOB_PING_SEND_REPLY:
+            return "JOB_PING_SEND_REPLY";
+        case JOB_PING_WAIT_FOR_REPLY:
+            return "JOB_PING_WAIT_FOR_REPLY";
+        case JOB_FILE_UPLOAD_SEND:
+            return "JOB_FILE_UPLOAD_SEND";
+        case JOB_FILE_UPLOAD_RECV_START:
+            return "JOB_FILE_UPLOAD_RECV_START";
+        case JOB_FILE_UPLOAD_RECV_END:
+            return "JOB_FILE_UPLOAD_RECV_END";
+        default:
+            return "UNKNOWN_JOB_TYPE";
+    }
+}
+
+void display_host_job_info(struct host_job *job, int host_id) {
+   
+   printf("\n\n\nHostID: %d\n", host_id);
+
+   printf("\n\nJob Info:\n");
+   printf("Job type: %s\n", get_job_type_string(job->type));
+
+    if (job->packet != NULL) {
+        printf("Packet data: %s\n", job->packet->payload);
+    } else {
+        printf("Packet data: NULL\n");
+    }
+
+    printf("Input port index: %d\n", job->in_port_index);
+    printf("Output port index: %d\n", job->out_port_index);
+    printf("Download file name: %s\n", job->fname_download);
+    printf("Upload file name: %s\n", job->fname_upload);
+    printf("Ping timer: %d\n", job->ping_timer);
+    printf("File upload destination: %d\n", job->file_upload_dst);
+
+    if (job->next != NULL) {
+        printf("Next job type: %s\n", get_job_type_string(job->next->type));
+    } else {
+        printf("Next job type: NULL\n");
+    }
+}
+
+
+void display_packet_info(struct packet *pkt) {
+    const char* type_string;
+    printf("\n\nPacket Info:\n");
+    switch (pkt->type) {
+        case PKT_PING_REQ:
+            type_string = "PKT_PING_REQ";
+            break;
+        case PKT_PING_REPLY:
+            type_string = "PKT_PING_REPLY";
+            break;
+        case PKT_FILE_UPLOAD_START:
+            type_string = "PKT_FILE_UPLOAD_START";
+            break;
+        case PKT_FILE_UPLOAD_END:
+            type_string = "PKT_FILE_UPLOAD_END";
+            break;
+        default:
+            type_string = "UNKNOWN_PACKET_TYPE";
+            break;
+    }
+
+    printf("Source: %c\n", pkt->src);
+    printf("Destination: %c\n", pkt->dst);
+    printf("Type: %s\n", type_string);
+    printf("Length: %d\n", pkt->length);
+    printf("Payload: %s\n", pkt->payload);
+}
+
+
 void host_main(int host_id)
 {
 
 /* State */
 char dir[MAX_DIR_NAME];
 int dir_valid = 0;
+
+// DEBUG (del)
+// /////////////////////////////////
+dir_valid = 1;
+strcpy(dir, (host_id==0) ? "t0":"t1");
+/////////////////////////////////////
 
 char man_msg[MAN_MSG_LENGTH];
 char man_reply_msg[MAN_MSG_LENGTH];
@@ -420,11 +504,13 @@ while(1) {
  	 * Execute one job in the job queue
  	 */
 
-	if (job_q_num(&job_q) > 0) {
+	
+      if (job_q_num(&job_q) > 0) {
+      
 
 		/* Get a new job from the job queue */
 		new_job = job_q_remove(&job_q);
-
+     
 
 		/* Send packet on all ports */
 		switch(new_job->type) {
@@ -528,12 +614,21 @@ while(1) {
 					new_job2->type = JOB_SEND_PKT_ALL_PORTS;
 					new_job2->packet = new_packet;
 					job_q_add(&job_q, new_job2);
+               
+               display_host_job_info(new_job2, host_id);
+               display_packet_info(new_packet);
+               
+               while((n = fread(string, sizeof(char), PKT_PAYLOAD_MAX, fp)) > 0) {
+				   
+                  printf("n=%d\n", n);
 
-					/* 
+                  /* 
 					 * Create the second packet which
 					 * has the file contents
 					 */
-					new_packet = (struct packet *) 
+					
+
+               new_packet = (struct packet *) 
 						malloc(sizeof(struct packet));
 					new_packet->dst 
 						= new_job->file_upload_dst;
@@ -541,8 +636,6 @@ while(1) {
 					new_packet->type = PKT_FILE_UPLOAD_END;
 
 
-					n = fread(string,sizeof(char),
-						PKT_PAYLOAD_MAX, fp);
 					fclose(fp);
 					string[n] = '\0';
 
@@ -564,9 +657,10 @@ while(1) {
 						= JOB_SEND_PKT_ALL_PORTS;
 					new_job2->packet = new_packet;
 					job_q_add(&job_q, new_job2);
+				   }
 
 					free(new_job);
-				}
+            }
 				else {  
 					/* Didn't open file */
 				}
@@ -614,7 +708,7 @@ while(1) {
 				file_buf_get_name(&f_buf_upload, string);
 				n = sprintf(name, "./%s/%s", dir, string);
 				name[n] = '\0';
-				fp = fopen(name, "w");
+				fp = fopen(name, "a");
 
 				if (fp != NULL) {
 					/* 

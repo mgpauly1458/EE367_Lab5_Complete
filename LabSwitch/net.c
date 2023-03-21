@@ -422,14 +422,22 @@ int load_net_data_file()
 FILE *fp;
 char fname[MAX_FILE_NAME];
 
+// DEBUG: uncomment this so the network file can be dynamically chosen
+//////////////////////////////////////////////////////////////////////////////
 	/* Open network configuration file */
-printf("Enter network data file: ");
-scanf("%s", fname);
+//printf("Enter network data file: ");
+//scanf("%s", fname);
+//fp = fopen(fname, "r");
+//if (fp == NULL) { 
+//	printf("net.c: File did not open\n"); 
+//	return(0);
+//}
+//////////////////////////////////////////////////////////////////////////////
+
+// DEBUG: del
+strcpy(fname, "pp.co");
 fp = fopen(fname, "r");
-if (fp == NULL) { 
-	printf("net.c: File did not open\n"); 
-	return(0);
-}
+//
 
 int i;
 int node_num;
