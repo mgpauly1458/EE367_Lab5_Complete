@@ -465,13 +465,12 @@ else {
 	g_net_node =(struct net_node*) malloc(sizeof(struct net_node)*node_num);
 	for (i=0; i<node_num; i++) { 
 		fscanf(fp, " %c ", &node_type);
-
-		if (node_type = 'H') {
-			fscanf(fp, " %d ", &node_id);
+		if (node_type == 'H') {
+         fscanf(fp, " %d ", &node_id);
 			g_net_node[i].type = HOST;
 			g_net_node[i].id = node_id;
 		}
-		else if (node_type = 'S') {
+		else if (node_type == 'S') {
          fscanf(fp, " %d ", &node_id);
          g_net_node[i].type = SWITCH;
          g_net_node[i].id = node_id;
@@ -534,7 +533,7 @@ for (i=0; i<g_net_node_num; i++) {
 	        printf("   Node %d HOST\n", g_net_node[i].id);
 	}
 	else if (g_net_node[i].type == SWITCH) {
-		printf(" SWITCH\n");
+		printf("   Node %d SWITCH\n", g_net_node[i].id);
 	}
 	else {
 		printf(" Unknown Type\n");
