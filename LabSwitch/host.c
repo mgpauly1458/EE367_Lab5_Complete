@@ -653,7 +653,14 @@ case JOB_FILE_UPLOAD_SEND:
 					 * Create the second packet which
 					 * has the file contents
 					 */
-					new_packet = (struct packet *) 
+					
+
+               int maxFileBuff = MAX_FILE_BUFFER;
+               while ((n  = fread(string,sizeof(char),PKT_PAYLOAD_MAX, fp)) > 0 && maxFileBuff > 0) {
+               
+               maxFileBuff -= PKT_PAYLOAD_MAX;
+
+               new_packet = (struct packet *) 
 						malloc(sizeof(struct packet));
 					new_packet->dst 
 						= new_job->file_upload_dst;
@@ -661,9 +668,6 @@ case JOB_FILE_UPLOAD_SEND:
 					new_packet->type = PKT_FILE_UPLOAD_CONT;
 
 
-					n = fread(string,sizeof(char),
-						PKT_PAYLOAD_MAX, fp);
-					fclose(fp);
 					string[n] = '\0';
 
 					for (i=0; i<n; i++) {
@@ -685,7 +689,10 @@ case JOB_FILE_UPLOAD_SEND:
 					new_job2->packet = new_packet;
 					job_q_add(&job_q, new_job2);
 
-
+               
+               }
+               
+               fclose(fp);
                // add test end job and packet
                
                new_packet = (struct packet *) malloc(sizeof(struct packet));
