@@ -736,6 +736,9 @@ case JOB_FILE_UPLOAD_RECV_START:
 
 			free(new_job->packet);
 			free(new_job);
+         break;
+
+      case JOB_FILE_UPLOAD_RECV_END:
 
 			if (dir_valid == 1) {
 
@@ -771,9 +774,7 @@ case JOB_FILE_UPLOAD_RECV_START:
 			}
 
 			break;
-		
-      case JOB_FILE_UPLOAD_RECV_END:
-         printf("job end reached\n");
+     
       }
 
 	}
