@@ -224,11 +224,17 @@ const char* get_job_type_string(int job_type) {
             return "JOB_FILE_UPLOAD_SEND";
         case JOB_FILE_UPLOAD_RECV_START:
             return "JOB_FILE_UPLOAD_RECV_START";
+        case JOB_FILE_UPLOAD_RECV_CONT:
+            return "JOB_FILE_UPLOAD_RECV_CONT";
         case JOB_FILE_UPLOAD_RECV_END:
             return "JOB_FILE_UPLOAD_RECV_END";
         default:
             return "UNKNOWN_JOB_TYPE";
     }
+}
+
+void display_job_number(struct job_queue *j) {
+   printf("\nnumber of jobs = %d\n", job_q_num(j));
 }
 
 void display_host_job_info(struct host_job *job, int host_id) {
@@ -272,6 +278,9 @@ void display_packet_info(struct packet *pkt) {
         case PKT_FILE_UPLOAD_START:
             type_string = "PKT_FILE_UPLOAD_START";
             break;
+        case PKT_FILE_UPLOAD_CONT:
+            type_string = "PKT_FILE_UPLOAD_CONT";
+            break;
         case PKT_FILE_UPLOAD_END:
             type_string = "PKT_FILE_UPLOAD_END";
             break;
@@ -285,6 +294,30 @@ void display_packet_info(struct packet *pkt) {
     printf("Type: %s\n", type_string);
     printf("Length: %d\n", pkt->length);
     printf("Payload: %s\n", pkt->payload);
+}
+
+void print_job_queue_contents(struct job_queue *queue) {
+    struct host_job *current_job = queue->head;
+
+    printf("\n\n\n\nPrinting job queue contents:\n\n\n\n");
+    while (current_job != NULL) {
+        printf("Job type: %s\n", get_job_type_string(current_job->type));
+        printf("Input port index: %d\n", current_job->in_port_index);
+        printf("Output port index: %d\n", current_job->out_port_index);
+
+        if (current_job->packet != NULL) {
+            printf("Packet data: %s\n", current_job->packet->payload);
+        } else {
+            printf("Packet data: NULL\n");
+        }
+
+        printf("Download file name: %s\n", current_job->fname_download);
+        printf("Upload file name: %s\n", current_job->fname_upload);
+        printf("Ping timer: %d\n", current_job->ping_timer);
+        printf("File upload destination: %d\n", current_job->file_upload_dst);
+
+        current_job = current_job->next;
+    }
 }
 
 
@@ -484,7 +517,10 @@ while(1) {
 						= JOB_FILE_UPLOAD_RECV_START;
 					job_q_add(&job_q, new_job);
 					break;
-
+            case (char) PKT_FILE_UPLOAD_CONT:
+               new_job->type = JOB_FILE_UPLOAD_RECV_CONT;
+               job_q_add(&job_q, new_job);
+               break;
 				case (char) PKT_FILE_UPLOAD_END:
 					new_job->type 
 						= JOB_FILE_UPLOAD_RECV_END;
@@ -506,11 +542,11 @@ while(1) {
 
 	
       if (job_q_num(&job_q) > 0) {
-      
+        
 
 		/* Get a new job from the job queue */
 		new_job = job_q_remove(&job_q);
-     
+      display_host_job_info(new_job, host_id);
 
 		/* Send packet on all ports */
 		switch(new_job->type) {
@@ -614,31 +650,25 @@ while(1) {
 					new_job2->type = JOB_SEND_PKT_ALL_PORTS;
 					new_job2->packet = new_packet;
 					job_q_add(&job_q, new_job2);
+               printf("job start added\n");    
+               //display_host_job_info(new_job2, host_id);
+               //display_packet_info(new_packet);
                
-               display_host_job_info(new_job2, host_id);
-               display_packet_info(new_packet);
-               
-               while((n = fread(string, sizeof(char), PKT_PAYLOAD_MAX, fp)) > 0) {
 				   
-                  printf("n=%d\n", n);
-
                   /* 
-					 * Create the second packet which
+					 * Create the data packets which
 					 * has the file contents
 					 */
 					
-
+               
                new_packet = (struct packet *) 
 						malloc(sizeof(struct packet));
 					new_packet->dst 
 						= new_job->file_upload_dst;
 					new_packet->src = (char) host_id;
-					new_packet->type = PKT_FILE_UPLOAD_END;
-
-
-					fclose(fp);
-					string[n] = '\0';
-
+					new_packet->type = PKT_FILE_UPLOAD_CONT;
+              
+               n = fread(string, sizeof(char), PKT_PAYLOAD_MAX, fp);
 					for (i=0; i<n; i++) {
 						new_packet->payload[i] 
 							= string[i];
@@ -657,9 +687,31 @@ while(1) {
 						= JOB_SEND_PKT_ALL_PORTS;
 					new_job2->packet = new_packet;
 					job_q_add(&job_q, new_job2);
-				   }
+              printf("job cont added\n");
+               
+               //display_host_job_info(new_job2, host_id);
+               //display_packet_info(new_packet);
 
-					free(new_job);
+               
+
+               // Create the final packet
+               new_packet = (struct packet *) malloc(sizeof(struct packet));
+               new_packet->dst = new_job->file_upload_dst;
+               new_packet->src = (char) host_id;
+               new_packet->type = PKT_FILE_UPLOAD_END;
+               
+               // create a job to send the packet
+               new_job2 = (struct host_job *) malloc(sizeof(struct host_job));
+               new_job2->type = JOB_SEND_PKT_ALL_PORTS;
+               new_job2->packet = new_packet;
+               job_q_add(&job_q, new_job2);
+               printf("job end added\n");
+               //display_host_job_info(new_job2, host_id);
+               //display_packet_info(new_packet);
+	            //display_job_number(&job_q);
+               
+               free(new_job);
+					fclose(fp);
             }
 				else {  
 					/* Didn't open file */
@@ -670,6 +722,8 @@ while(1) {
 			/* The next two jobs are for the receving host */
 
 		case JOB_FILE_UPLOAD_RECV_START:
+         //printf("\n\n\nrecv start\n\n\n");
+         //display_job_number(&job_q);
 
 			/* Initialize the file buffer data structure */
 			file_buf_init(&f_buf_upload);
@@ -682,13 +736,17 @@ while(1) {
 				new_job->packet->payload, 
 				new_job->packet->length);
 
+         
+         //display_host_job_info(new_job, host_id);
+         //display_packet_info(new_job->packet);
+
 			free(new_job->packet);
 			free(new_job);
 			break;
-
-		case JOB_FILE_UPLOAD_RECV_END:
-
-			/* 
+      case JOB_FILE_UPLOAD_RECV_CONT:
+         //printf("\n\n\nrecv cont\n\n\n");
+         //display_job_number(&job_q);
+		/* 
 			 * Download packet payload into file buffer 
 			 * data structure 
 			 */
@@ -696,8 +754,25 @@ while(1) {
 				new_job->packet->payload,
 				new_job->packet->length);
 
+         //display_host_job_info(new_job, host_id);
+         //display_packet_info(new_job->packet);
+
 			free(new_job->packet);
 			free(new_job);
+         
+         // DEBUG (DEL)
+         //char buffCheck[MAX_FILE_BUFFER];
+         //strcpy(buffCheck, f_buf_upload.buffer);
+         //buffCheck[f_buf_upload.occ] = '\0';
+         //printf("current f_buf_upload=%s\n", buffCheck);
+         //display_job_number(&job_q);
+         //printf("recv cont-end\n");
+         //
+         break;
+
+
+		case JOB_FILE_UPLOAD_RECV_END:
+         printf("\n\n\nrecv end\n\n\n");
 
 			if (dir_valid == 1) {
 
