@@ -458,8 +458,23 @@ while(1) {
 				}
 				new_job->fname_upload[i] = '\0';
 				job_q_add(&job_q, new_job);
-					
-				break;
+				
+            
+
+			case 'd':
+            sscanf(man_msg, "%d %s", &dst, name);
+            new_job = (struct host_job *) malloc(sizeof(struct host_job));
+            new_job->type = JOB_FILE_DOWNLOAD_SEND;
+            new_job->file_download_dst = dst;
+            for (i=0; name[i] != '\0'; i++) {
+               new_job->fname_download[i] = name[i];
+            }
+            new_job->fname_download[i] = '\0';
+            job_q_add(&job_q, new_job);
+            
+            display_host_job_info(new_job, host_id);
+
+            break;
 			default:
 			;
 		}
@@ -546,7 +561,6 @@ while(1) {
 
 		/* Get a new job from the job queue */
 		new_job = job_q_remove(&job_q);
-      display_host_job_info(new_job, host_id);
 
 		/* Send packet on all ports */
 		switch(new_job->type) {
