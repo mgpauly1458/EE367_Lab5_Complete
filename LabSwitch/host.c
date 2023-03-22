@@ -228,6 +228,8 @@ const char* get_job_type_string(int job_type) {
             return "JOB_FILE_UPLOAD_RECV_CONT";
         case JOB_FILE_UPLOAD_RECV_END:
             return "JOB_FILE_UPLOAD_RECV_END";
+        case JOB_FILE_DOWNLOAD_SEND:
+            return "JOB_FILE_DOWNLOAD_SEND";
         default:
             return "UNKNOWN_JOB_TYPE";
     }
@@ -256,7 +258,7 @@ void display_host_job_info(struct host_job *job, int host_id) {
     printf("Upload file name: %s\n", job->fname_upload);
     printf("Ping timer: %d\n", job->ping_timer);
     printf("File upload destination: %d\n", job->file_upload_dst);
-
+    printf("File download destination: %d\n", job->file_download_dst);
     if (job->next != NULL) {
         printf("Next job type: %s\n", get_job_type_string(job->next->type));
     } else {
@@ -284,13 +286,16 @@ void display_packet_info(struct packet *pkt) {
         case PKT_FILE_UPLOAD_END:
             type_string = "PKT_FILE_UPLOAD_END";
             break;
+        case PKT_FILE_DOWNLOAD_SEND:
+            type_string = "PKT_FILE_DOWNLOAD_SEND";
+            break;
         default:
             type_string = "UNKNOWN_PACKET_TYPE";
             break;
     }
 
-    printf("Source: %c\n", pkt->src);
-    printf("Destination: %c\n", pkt->dst);
+    printf("Source: %d\n", pkt->src);
+    printf("Destination: %d\n", pkt->dst);
     printf("Type: %s\n", type_string);
     printf("Length: %d\n", pkt->length);
     printf("Payload: %s\n", pkt->payload);
@@ -428,8 +433,8 @@ while(1) {
 				sscanf(man_msg, "%d", &dst);
 				new_packet = (struct packet *) 
 						malloc(sizeof(struct packet));	
-				new_packet->src = (char) host_id;
-				new_packet->dst = (char) dst;
+				new_packet->src =  host_id;
+				new_packet->dst =  dst;
 				new_packet->type = (char) PKT_PING_REQ;
 				new_packet->length = 0;
 				new_job = (struct host_job *) 
@@ -472,7 +477,6 @@ while(1) {
             new_job->fname_download[i] = '\0';
             job_q_add(&job_q, new_job);
             
-            display_host_job_info(new_job, host_id);
 
             break;
 			default:
@@ -582,7 +586,7 @@ while(1) {
 			new_packet = (struct packet *) 
 				malloc(sizeof(struct packet));
 			new_packet->dst = new_job->packet->src;
-			new_packet->src = (char) host_id;
+			new_packet->src =  host_id;
 			new_packet->type = PKT_PING_REPLY;
 			new_packet->length = 0;
 
@@ -625,19 +629,25 @@ while(1) {
 
       case JOB_FILE_DOWNLOAD_SEND:
          if (dir_valid == 1) {
+
             n = sprintf(name, "./%s/%s", dir, new_job->fname_download);
             name[n] = '\0';
-            printf("name=%s\n", name);
             
-            file_buf_init(&f_buf_download);
+            new_packet = (struct packet *) malloc(sizeof(struct packet));
+            new_packet->src = host_id;
+            new_packet->type = PKT_FILE_DOWNLOAD_SEND;
+            new_packet->length = n;
+            strcpy(new_packet->payload, name);
 
-            file_buf_put_name(&f_buf_download, name, n);
-            
-            char checkName[1000];
-            strcpy(checkName, f_buf_download.name);
-            printf("\n\nfile_buf_name=%s\n", checkName);
 
+            new_job2 = (struct host_job *) malloc(sizeof(struct host_job));
+            new_job2->type = JOB_SEND_PKT_ALL_PORTS;
+            new_job2->packet = new_packet;
+            job_q_add(&job_q, new_job2);
          }
+
+            display_host_job_info(new_job2, host_id);
+            display_packet_info(new_job2->packet);
             break;
 
          /* The next three jobs deal with uploading a file */
@@ -659,8 +669,8 @@ case JOB_FILE_UPLOAD_SEND:
 					new_packet = (struct packet *) 
 						malloc(sizeof(struct packet));
 					new_packet->dst 
-						= new_job->file_upload_dst;
-					new_packet->src = (char) host_id;
+						= (char) new_job->file_upload_dst;
+					new_packet->src = host_id;
 					new_packet->type 
 						= PKT_FILE_UPLOAD_START;
 					for (i=0; 
@@ -695,8 +705,8 @@ case JOB_FILE_UPLOAD_SEND:
                new_packet = (struct packet *) 
 						malloc(sizeof(struct packet));
 					new_packet->dst 
-						= new_job->file_upload_dst;
-					new_packet->src = (char) host_id;
+						= (char) new_job->file_upload_dst;
+					new_packet->src =  host_id;
 					new_packet->type = PKT_FILE_UPLOAD_CONT;
 
 
@@ -729,7 +739,7 @@ case JOB_FILE_UPLOAD_SEND:
                
                new_packet = (struct packet *) malloc(sizeof(struct packet));
                new_packet->src = host_id;
-               new_packet->dst = new_job->file_upload_dst;
+               new_packet->dst = (char) new_job->file_upload_dst;
                new_packet->type = PKT_FILE_UPLOAD_END;
                new_packet->length = 0;
                strcpy(new_packet->payload, "No Data");
