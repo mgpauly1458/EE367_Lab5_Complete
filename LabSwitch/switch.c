@@ -41,16 +41,34 @@ else {
 }
 }
 
+void display_forward_table(struct forward_table table) {
+   int i;
+   printf("Forward table:\n");
+   printf("Size: %d\n", table.size);
+   printf("Valid\tHost ID\tPort\n");
+   for (i = 0; i < 100; i++) {
+      if (table.valid[i] != 0 || table.HostID[i] != -1) {
+         printf("%d\t%d\t%d\n", table.valid[i], table.HostID[i], table.port[i]);
+      }
+   }
+}
+
+
 void init_forward_table(struct forward_table *table) {
    int i;
    table->size = 0;
    for (i = 0; i < MAX_TABLE_SIZE; i++) {
       table->valid[i] = 0;
+      table->HostID[i] = -1;
+      table->port[i] = 0;
    }
 }
 
 void add_src_to_table(struct forward_table *table, struct packet *pkt, int port_index) {
-  for(int i = 0; i < MAX_TABLE_SIZE; i++) {
+   
+// every time 0 sends something, it will start at 0 and get it right, which will screw it up
+   int i;
+   for(i = 0; i < MAX_TABLE_SIZE; i++) {
    if( (char)table->HostID[i] == pkt->src ) {
       if(table->valid[i]) {
          return;
@@ -59,6 +77,8 @@ void add_src_to_table(struct forward_table *table, struct packet *pkt, int port_
          table->HostID[i] = pkt->src;
          table->port[i] = port_index;
       }
+   }
+
   }
 
    int s = table->size;
@@ -67,7 +87,7 @@ void add_src_to_table(struct forward_table *table, struct packet *pkt, int port_
    table->port[i] = port_index;
    table->size = table->size + 1;
 
-}
+
 
 }
 
@@ -123,6 +143,7 @@ void switch_main(int host_id) {
 
    job_q_init(&job_q);
 
+   display_forward_table(table);
     //main loop
    while(1) {
 
@@ -135,7 +156,7 @@ void switch_main(int host_id) {
          if (n > 0) {
             
             display_packet_info(in_packet);
-
+            display_forward_table(table);
             // add packet routing here
             // check whole table
             if((n = is_host_in_table(&table, in_packet->dst)) >= 0) {
