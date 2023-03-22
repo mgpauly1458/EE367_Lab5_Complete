@@ -658,7 +658,7 @@ case JOB_FILE_UPLOAD_SEND:
 					new_packet->dst 
 						= new_job->file_upload_dst;
 					new_packet->src = (char) host_id;
-					new_packet->type = PKT_FILE_UPLOAD_END;
+					new_packet->type = PKT_FILE_UPLOAD_CONT;
 
 
 					n = fread(string,sizeof(char),
@@ -685,6 +685,20 @@ case JOB_FILE_UPLOAD_SEND:
 					new_job2->packet = new_packet;
 					job_q_add(&job_q, new_job2);
 
+
+               // add test end job and packet
+               
+               new_packet = (struct packet *) malloc(sizeof(struct packet));
+               new_packet->src = host_id;
+               new_packet->dst = new_job->file_upload_dst;
+               new_packet->type = PKT_FILE_UPLOAD_END;
+               new_packet->length = 0;
+               strcpy(new_packet->payload, "No Data");
+
+               new_job2 = (struct host_job *) malloc(sizeof(struct host_job));
+               new_job2->type = JOB_SEND_PKT_ALL_PORTS;
+               new_job2->packet = new_packet;
+               job_q_add(&job_q, new_job2);
 					free(new_job);
 				}
 				else {  
@@ -710,7 +724,7 @@ case JOB_FILE_UPLOAD_RECV_START:
 			free(new_job);
 			break;
 
-		case JOB_FILE_UPLOAD_RECV_END:
+		case JOB_FILE_UPLOAD_RECV_CONT:
 
 			/* 
 			 * Download packet payload into file buffer 
@@ -757,7 +771,10 @@ case JOB_FILE_UPLOAD_RECV_START:
 			}
 
 			break;
-		}
+		
+      case JOB_FILE_UPLOAD_RECV_END:
+         printf("job end reached\n");
+      }
 
 	}
 	
