@@ -659,7 +659,6 @@ while(1) {
 
       case JOB_FILE_DOWNLOAD_RECV:
             
-            display_host_job_info(new_job, host_id);
             
             new_job2 = (struct host_job *) malloc(sizeof(struct host_job));
             new_job2->type = JOB_FILE_UPLOAD_SEND;
