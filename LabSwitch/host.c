@@ -623,7 +623,24 @@ while(1) {
 			break;	
 
 
-		/* The next three jobs deal with uploading a file */
+      case JOB_FILE_DOWNLOAD_SEND:
+         if (dir_valid == 1) {
+            n = sprintf(name, "./%s/%s", dir, new_job->fname_download);
+            name[n] = '\0';
+            printf("name=%s\n", name);
+            
+            file_buf_init(&f_buf_download);
+
+            file_buf_put_name(&f_buf_download, name, n);
+            
+            char checkName[1000];
+            strcpy(checkName, f_buf_download.name);
+            printf("\n\nfile_buf_name=%s\n", checkName);
+
+         }
+            break;
+
+         /* The next three jobs deal with uploading a file */
 case JOB_FILE_UPLOAD_SEND:
 
 			/* Open file */
@@ -631,7 +648,8 @@ case JOB_FILE_UPLOAD_SEND:
 				n = sprintf(name, "./%s/%s", 
 					dir, new_job->fname_upload);
 				name[n] = '\0';
-				fp = fopen(name, "r");
+				
+            fp = fopen(name, "r");
 				if (fp != NULL) {
 
 				        /* 
