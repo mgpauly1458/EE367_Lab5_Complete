@@ -46,4 +46,4 @@ struct packet { /* struct for a packet */
 #define PKT_FILE_UPLOAD_CONT 3
 #define PKT_FILE_UPLOAD_END 4
 #define PKT_FILE_DOWNLOAD_SEND 5
-
+#define PKT_FILE_DOWNLOAD_RECV 6

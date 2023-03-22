@@ -230,6 +230,8 @@ const char* get_job_type_string(int job_type) {
             return "JOB_FILE_UPLOAD_RECV_END";
         case JOB_FILE_DOWNLOAD_SEND:
             return "JOB_FILE_DOWNLOAD_SEND";
+        case JOB_FILE_DOWNLOAD_RECV:
+            return "JOB_FILE_DOWNLOAD_RECV";
         default:
             return "UNKNOWN_JOB_TYPE";
     }
@@ -545,7 +547,12 @@ while(1) {
 						= JOB_FILE_UPLOAD_RECV_END;
 					job_q_add(&job_q, new_job);
 					break;
-				default:
+            case (char) PKT_FILE_DOWNLOAD_SEND:
+               
+               new_job->type = JOB_FILE_DOWNLOAD_RECV;
+               job_q_add(&job_q, new_job);
+				   break;
+            default:
 					free(in_packet);
 					free(new_job);
 			}
@@ -635,6 +642,7 @@ while(1) {
             
             new_packet = (struct packet *) malloc(sizeof(struct packet));
             new_packet->src = host_id;
+            new_packet->dst = new_job->file_download_dst;
             new_packet->type = PKT_FILE_DOWNLOAD_SEND;
             new_packet->length = n;
             strcpy(new_packet->payload, name);
@@ -644,10 +652,20 @@ while(1) {
             new_job2->type = JOB_SEND_PKT_ALL_PORTS;
             new_job2->packet = new_packet;
             job_q_add(&job_q, new_job2);
-         }
+           
+            printf("new_job:\n");
+            display_host_job_info(new_job, host_id);
+            display_packet_info(new_job->packet);
 
+            printf("new_job2:\n");
             display_host_job_info(new_job2, host_id);
             display_packet_info(new_job2->packet);
+         }
+            free(new_job);
+            break;
+
+      case JOB_FILE_DOWNLOAD_RECV:
+            printf("\n\ndownload recv\n\n");
             break;
 
          /* The next three jobs deal with uploading a file */
