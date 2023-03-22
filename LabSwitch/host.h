@@ -36,5 +36,5 @@ struct job_queue {
 };
 
 void host_main(int host_id);
-
+void display_packet_info(struct packet *);
 

@@ -1,3 +1,4 @@
+#define MAX_TABLE_SIZE 100
 
 void switch_main(int);
 
@@ -17,6 +18,6 @@ struct switch_job_queue {
 struct forward_table {
    int size;
    int valid[100];
-   int dest[100];
+   int HostID[100];
    int port[100];
 };

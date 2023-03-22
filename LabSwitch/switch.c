@@ -20,8 +20,8 @@
 #define PKT_PAYLOAD_MAX 100
 #define TENMILLISEC 10000    //10 millisecond sleep
 
+
 /* Job queue operations */
-void job_q_add(struct job_queue *j_q, struct host_job *j);
 struct host_job *job_q_remove(struct job_queue *j_q);
 void job_q_init(struct job_queue *j_q);
 int job_q_num(struct job_queue *j_q);
@@ -44,13 +44,50 @@ else {
 void init_forward_table(struct forward_table *table) {
    int i;
    table->size = 0;
-   for (i = 0; i < 100; i++) {
+   for (i = 0; i < MAX_TABLE_SIZE; i++) {
       table->valid[i] = 0;
-      table->dest[i] = 0;
-      table->port[i] = 0;
    }
 }
 
+void add_src_to_table(struct forward_table *table, struct packet *pkt, int port_index) {
+  for(int i = 0; i < MAX_TABLE_SIZE; i++) {
+   if( (char)table->HostID[i] == pkt->src ) {
+      if(table->valid[i]) {
+         return;
+      } else {
+         table->valid[i] = 1;
+         table->HostID[i] = pkt->src;
+         table->port[i] = port_index;
+      }
+  }
+
+   int s = table->size;
+   table->valid[s] = 1;
+   table->HostID[i] = pkt->src;
+   table->port[i] = port_index;
+   table->size = table->size + 1;
+
+}
+
+}
+
+void send_to_all_ports(int node_port_num, struct net_port **node_port, struct packet *pkt) {
+  for (int k = 0; k < node_port_num; k++) {
+      packet_send(node_port[k], pkt);
+  }
+  free(pkt);
+}
+
+
+int is_host_in_table(struct forward_table *table, char dst) {
+   int i;
+   for(i = 0; i < MAX_TABLE_SIZE; i++) {
+      if( (char)table->HostID[i] == dst && table->valid[i]) {
+         return i;
+   }
+      return -1;
+}
+}
 
 void switch_main(int host_id) {
 
@@ -77,6 +114,7 @@ void switch_main(int host_id) {
 
    node_port = (struct net_port **) malloc(node_port_num*sizeof(struct net_port *));
 
+   // populate node_port
    p = node_port_list;
    for (k=0; k<node_port_num; k++) {
       node_port[k] = p;
@@ -95,11 +133,21 @@ void switch_main(int host_id) {
          n = packet_recv(node_port[k], in_packet);
 
          if (n > 0) {
-            new_job = (struct switch_job *) malloc(sizeof(struct switch_job));
-            new_job->in_port_index = k;
-            new_job->packet = in_packet;
+            
+            display_packet_info(in_packet);
 
             // add packet routing here
+            // check whole table
+            if((n = is_host_in_table(&table, in_packet->dst)) >= 0) {
+               // port is in table, send it
+               packet_send(node_port[n], in_packet);
+               add_src_to_table(&table, in_packet, k);
+
+            } else {
+               // port is not in table
+               add_src_to_table(&table, in_packet, k);
+               send_to_all_ports(node_port_num, node_port, in_packet);
+            }
          }
       }
    }
