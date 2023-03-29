@@ -124,7 +124,8 @@ void switch_main(int host_id) {
       // socket
    int fd[2];
    pid_t pid;
-
+   struct net_data *g_net_data = get_g_net_data();
+   g_net_data->server_pipe = fd[0];
        // Create the pipe
     if (pipe(fd) == -1) {
         perror("pipe");
@@ -145,7 +146,7 @@ void switch_main(int host_id) {
         // Close the read end of the pipe
         close(fd[0]);
 
-        create_server(3500, fd[1]);
+        create_server(g_net_data->server_port, fd[1]);
 
         // Exit the child process
         exit(EXIT_SUCCESS);
@@ -154,7 +155,7 @@ void switch_main(int host_id) {
     // Parent process
     else {
         // Close the write end of the pipe
-      close(fd[1]);        
+      close(fd[1]);
               // test packet
         struct packet *p2 = malloc(sizeof(struct packet));
         p2->src = 0;
@@ -163,7 +164,7 @@ void switch_main(int host_id) {
         p2->length = 11;
         strncpy(p2->payload, "Hello World", p2->length);
       
-        create_client("wiliki.eng.hawaii.edu", 3500, p2);
+        create_client(g_net_data->send_domain, g_net_data->send_port, p2);
 
         // Read the message from the read end of the pipe
         struct packet *p3 = malloc(sizeof(struct packet)); 
@@ -173,9 +174,6 @@ void switch_main(int host_id) {
         printf("client process data received = %d\n", n);
         display_packet_info(p3); 
         
-         // net data test
-         struct net_data *g_net_data = get_g_net_data();
-         printf("\n\nsend_domain=%s, send_port=%d, server_port=%d\n", g_net_data->send_domain, g_net_data->send_port, g_net_data->server_port);
 
         // Close the read end of the pipe
         close(fd[0]);
