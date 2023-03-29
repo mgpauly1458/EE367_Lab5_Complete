@@ -435,7 +435,7 @@ char fname[MAX_FILE_NAME];
 //////////////////////////////////////////////////////////////////////////////
 
 // DEBUG: del
-strcpy(fname, "switchTest.config");
+strcpy(fname, "socketTest.config");
 fp = fopen(fname, "r");
 //
 
