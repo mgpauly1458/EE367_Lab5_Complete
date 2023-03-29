@@ -15,6 +15,7 @@
 #include "man.h"
 #include "host.h"
 #include "packet.h"
+#include "switch.h"
 
 #define MAX_FILE_BUFFER 1000
 #define MAX_MSG_LENGTH 100
@@ -400,7 +401,7 @@ node_port = (struct net_port **)
 p = node_port_list;
 for (k = 0; k < node_port_num; k++) {
 	node_port[k] = p;
-	p = p->next;
+   p = p->next;
 }	
 
 /* Initialize the job queue */

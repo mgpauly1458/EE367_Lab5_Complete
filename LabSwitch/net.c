@@ -144,7 +144,7 @@ r = NULL;
 p = &g_port_list;
 
 while (*p != NULL) {
-	if ((*p)->pipe_host_id == host_id) {
+	if ((*p)->pipe_host_id == host_id || (*p)->sock_host_id == host_id ) {
 		t = *p;	
 		*p = (*p)->next;
 		t->next = r;
@@ -413,7 +413,15 @@ for (i=0; i<g_net_link_num; i++) {
 		p1->next = g_port_list;
 		g_port_list = p0;
 
-	}
+	}  else if(g_net_link[i].type == SOCKET) {
+      p0 = (struct net_port *) malloc(sizeof(struct net_port));
+      p0->type = g_net_link[i].type;
+      p0->sock_host_id = g_net_data->switch_host_id;
+      
+      p0->next = g_port_list;
+      g_port_list = p0;
+   }
+
 }
 
 }
@@ -479,6 +487,7 @@ else {
          fscanf(fp, " %d ", &node_id);
          g_net_node[i].type = SWITCH;
          g_net_node[i].id = node_id;
+         g_net_data->switch_host_id = node_id;
       }
 
       else {
@@ -530,10 +539,13 @@ else {
 		} else if (link_type == 'S') {
          fscanf(fp, " %d %s %d %s %d ", &node0, send_domain, &send_port, server_domain, &server_port);
         // printf("\n\nnode0=%d send_domain=%s, send_port=%d server_domain=%s server_port=%d\n", node0, send_domain, send_port, server_domain, server_port);
+         g_net_link[i].type = SOCKET;
+
          g_net_data->send_port = send_port;
          g_net_data->server_port = server_port;
          strcpy(g_net_data->send_domain, send_domain);
-      }
+      } 
+
 		else {
 			printf("   net.c: Unidentified link type\n");
 		}

@@ -15,6 +15,8 @@ struct switch_job_queue {
    int occ;
 };
 
+void display_port_info(struct net_port*);
+
 struct forward_table {
    int size;
    int valid[100];

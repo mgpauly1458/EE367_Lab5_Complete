@@ -27,6 +27,16 @@ struct host_job *job_q_remove(struct job_queue *j_q);
 void job_q_init(struct job_queue *j_q);
 int job_q_num(struct job_queue *j_q);
 
+void display_port_info(struct net_port *p) {
+    printf("Net port:\n");
+    printf("  type: %d\n", p->type);
+    printf("  pipe_host_id: %d\n", p->pipe_host_id);
+    printf("  pipe_send_fd: %d\n", p->pipe_send_fd);
+    printf("  pipe_recv_fd: %d\n", p->pipe_recv_fd);
+    printf("  next: %p\n", (void *) p->next);
+    printf("  sock_host_id: %d\n", p->sock_host_id);
+}
+
 void switch_job_q_add(struct switch_job_queue *j_q, struct switch_job *j)
 {
 if (j_q->head == NULL ) {
@@ -74,7 +84,8 @@ void add_src_to_table(struct forward_table *table, struct packet *pkt, int port_
 }
 
 void send_to_all_ports(int node_port_num, struct net_port **node_port, struct packet *pkt) {
-  for (int k = 0; k < node_port_num; k++) {
+   printf("\n\nsending to all ports\n\n");
+   for (int k = 0; k < node_port_num; k++) {
       packet_send(node_port[k], pkt);
   }
   free(pkt);
@@ -107,6 +118,10 @@ void switch_main(int host_id) {
    for(p=node_port_list; p!=NULL; p=p->next) {
       node_port_num++;
    }
+   
+   // port list debug
+   printf("\n\nnode_port_num=%d\n\n", node_port_num);
+   
 
    node_port = (struct net_port **) malloc(node_port_num*sizeof(struct net_port *));
 
@@ -114,7 +129,9 @@ void switch_main(int host_id) {
    p = node_port_list;
    for (k=0; k<node_port_num; k++) {
       node_port[k] = p;
+      display_port_info(p);
       p = p->next;
+   
    }
 
    job_q_init(&job_q);

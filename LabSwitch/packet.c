@@ -25,11 +25,8 @@ if (port->type == PIPE) {
 		msg[i+4] = p->payload[i];
 	}
 	write(port->pipe_send_fd, msg, p->length+4);
-//printf("PACKET SEND, src=%d dst=%d p-src=%d p-dst=%d\n", 
-//		(int) msg[0], 
-//		(int) msg[1], 
-//		(int) p->src, 
-//		(int) p->dst);
+} else if (port->type == SOCKET) {
+   return;
 }
 
 return;
@@ -51,13 +48,9 @@ if (port->type == PIPE) {
 		for (i=0; i<p->length; i++) {
 			p->payload[i] = msg[i+4];
 		}
-
-// printf("PACKET RECV, src=%d dst=%d p-src=%d p-dst=%d\n", 
-//		(int) msg[0], 
-//		(int) msg[1], 
-//		(int) p->src, 
-//		(int) p->dst);
 	}
+} else if(port->type == SOCKET) {
+   return 0;
 }
 
 return(n);

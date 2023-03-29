@@ -13,6 +13,7 @@ struct net_data {
    int server_port;
    int server_pipe;
    char send_domain[100];
+   int switch_host_id;
 };
 
 struct net_data* get_g_net_data();
