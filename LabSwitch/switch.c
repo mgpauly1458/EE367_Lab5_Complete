@@ -156,6 +156,7 @@ void switch_main(int host_id) {
     else {
         // Close the write end of the pipe
       close(fd[1]);
+      g_net_data->server_port = fd[0];
               // test packet
         struct packet *p2 = malloc(sizeof(struct packet));
         p2->src = 0;
@@ -168,7 +169,7 @@ void switch_main(int host_id) {
 
         // Read the message from the read end of the pipe
         struct packet *p3 = malloc(sizeof(struct packet)); 
-        int n = receive_packet(fd[0], p3);
+        int n = receive_packet(g_net_data->server_port, p3);
 
         // diplay the data
         printf("client process data received = %d\n", n);
