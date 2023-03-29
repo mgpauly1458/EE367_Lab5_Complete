@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-
+#include <signal.h>
 #include <unistd.h>
 #include <fcntl.h>
 
@@ -12,6 +12,7 @@
 #include "host.h"
 #include "packet.h"
 #include "switch.h"
+#include "sockets.h"
 
 #define MAX_FILE_BUFFER 1000
 #define MAX_MSG_LENGTH 100
@@ -119,32 +120,91 @@ void switch_main(int host_id) {
    job_q_init(&job_q);
 
    display_forward_table(table);
-    //main loop
-   while(1) {
+
+      // socket
+   int fd[2];
+   pid_t pid;
+
+       // Create the pipe
+    if (pipe(fd) == -1) {
+        perror("pipe");
+        exit(EXIT_FAILURE);
+    }
+
+      // Fork the process
+    pid = fork();
+
+      // Check for errors
+    if (pid < 0) {
+        perror("fork");
+        exit(EXIT_FAILURE);
+    }
+
+      // Child process
+    if (pid == 0) {
+        // Close the read end of the pipe
+        close(fd[0]);
+
+        create_server(3500, fd[1]);
+
+        // Exit the child process
+        exit(EXIT_SUCCESS);
+    }
+
+    // Parent process
+    else {
+        // Close the write end of the pipe
+      close(fd[1]);        
+              // test packet
+        struct packet *p2 = malloc(sizeof(struct packet));
+        p2->src = 0;
+        p2->dst = 1;
+        p2->type = PKT_PING_REPLY;
+        p2->length = 11;
+        strncpy(p2->payload, "Hello World", p2->length);
+      
+        create_client("wiliki.eng.hawaii.edu", 3500, p2);
+
+        // Read the message from the read end of the pipe
+        struct packet *p3 = malloc(sizeof(struct packet)); 
+        int n = receive_packet(fd[0], p3);
+
+        // diplay the data
+        printf("client process data received = %d\n", n);
+        display_packet_info(p3); 
+        
+        // Close the read end of the pipe
+        close(fd[0]);
+         
+        // kill child process
+        kill(pid, SIGKILL);
+   
+   //main loop
+      while(1) {
 
     //get packets from incoming links
        //scan all ports
-      for (k = 0; k < node_port_num; k++) {
-         in_packet = (struct packet *) malloc(sizeof(struct packet));
-         n = packet_recv(node_port[k], in_packet);
+         for (k = 0; k < node_port_num; k++) {
+            in_packet = (struct packet *) malloc(sizeof(struct packet));
+            n = packet_recv(node_port[k], in_packet);
 
-         if (n > 0) {
+            if (n > 0) {
             
-            display_forward_table(table);
-            // add packet routing here
-            // check whole table
-            if(is_host_in_table(&table, in_packet->dst)) {
-               // port is in table, send it
-               packet_send(node_port[table.port[in_packet->dst]], in_packet);
-               add_src_to_table(&table, in_packet, k);
+               display_forward_table(table);
+               // add packet routing here
+               // check whole table
+               if(is_host_in_table(&table, in_packet->dst)) {
+                  // port is in table, send it
+                  packet_send(node_port[table.port[in_packet->dst]], in_packet);
+                  add_src_to_table(&table, in_packet, k);
 
-            } else {
-               // port is not in table
-               add_src_to_table(&table, in_packet, k);
-               send_to_all_ports(node_port_num, node_port, in_packet);
+              } else {
+                  // port is not in table
+                  add_src_to_table(&table, in_packet, k);
+                  send_to_all_ports(node_port_num, node_port, in_packet);
+               }
             }
          }
       }
    }
 }
-
