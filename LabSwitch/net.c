@@ -77,6 +77,11 @@ static struct net_port *g_port_list = NULL;
 static struct man_port_at_man *g_man_man_port_list = NULL;
 static struct man_port_at_host *g_man_host_port_list = NULL;
 
+static struct net_data *g_net_data = NULL;
+
+struct net_data* get_g_net_data() {
+   return g_net_data;
+}
 /* 
  * Loads network configuration file and creates data structures
  * for nodes and links.  The results are accessible through
