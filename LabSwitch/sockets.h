@@ -1,9 +1,4 @@
-#define SERVER_PORT 3535
-
-int create_server_socket(int);
-int accept_incoming_connection(int);
-int create_client_socket(char*, int);
-void send_message(int);
-void receive_message(int);
-
-
+void create_server(int port, int pipe_fd);
+void create_client(char* domain_name, int port, char* text);
+void send_packet(int pipe_fd, struct packet *p);
+int receive_packet(int pipe_fd, struct packet *p);
