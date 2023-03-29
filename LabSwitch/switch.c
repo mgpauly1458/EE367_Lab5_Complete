@@ -173,6 +173,10 @@ void switch_main(int host_id) {
         printf("client process data received = %d\n", n);
         display_packet_info(p3); 
         
+         // net data test
+         struct net_data *g_net_data = get_g_net_data();
+         printf("\n\nsend_domain=%s, send_port=%d, server_port=%d\n", g_net_data->send_domain, g_net_data->send_port, g_net_data->server_port);
+
         // Close the read end of the pipe
         close(fd[0]);
          

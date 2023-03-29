@@ -426,7 +426,7 @@ int load_net_data_file()
 {
 FILE *fp;
 char fname[MAX_FILE_NAME];
-
+g_net_data = malloc(sizeof(struct net_data));
 // DEBUG: uncomment this so the network file can be dynamically chosen
 //////////////////////////////////////////////////////////////////////////////
 	/* Open network configuration file */
@@ -504,6 +504,10 @@ else {
 int link_num;
 char link_type;
 int node0, node1;
+int server_port;
+int send_port;
+char send_domain[100];
+char server_domain[100];
 
 fscanf(fp, " %d ", &link_num);
 printf("Number of links = %d\n", link_num);
@@ -523,7 +527,13 @@ else {
 			g_net_link[i].type = PIPE;
 			g_net_link[i].pipe_node0 = node0;
 			g_net_link[i].pipe_node1 = node1;
-		}
+		} else if (link_type == 'S') {
+         fscanf(fp, " %d %s %d %s %d ", &node0, send_domain, &send_port, server_domain, &server_port);
+        // printf("\n\nnode0=%d send_domain=%s, send_port=%d server_domain=%s server_port=%d\n", node0, send_domain, send_port, server_domain, server_port);
+         g_net_data->send_port = send_port;
+         g_net_data->server_port = server_port;
+         strcpy(g_net_data->send_domain, send_domain);
+      }
 		else {
 			printf("   net.c: Unidentified link type\n");
 		}
