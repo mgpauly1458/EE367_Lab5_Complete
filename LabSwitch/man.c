@@ -204,15 +204,11 @@ int host_id;
 char name[NAME_LENGTH];
 char msg[NAME_LENGTH];
 
-// DEBUG (hard coded to uploat t1/large.txt to t0) (current host must be 1 to work)
-strcpy(name, "large.txt");
-host_id = 0;
-///////////////////////////////////////////////////
 
-//printf("Enter file name to upload: ");
-//scanf("%s", name);
-//printf("Enter host id of destination:  ");
-//scanf("%d", &host_id);
+printf("Enter file name to upload: ");
+scanf("%s", name);
+printf("Enter host id of destination:  ");
+scanf("%d", &host_id);
 printf("\n");
 
 n = sprintf(msg, "u %d %s", host_id, name);
@@ -226,15 +222,11 @@ int file_download(struct man_port_at_man *curr_host) {
    char name[NAME_LENGTH];
    char msg[NAME_LENGTH];
 
-   //DEBUG (hard coded to test downloading file t1/haha.txt)
-   strcpy(name, "haha.txt");
-   host_id = 1;
-   ///////////////////////////////////////////////
 
-   //printf("Enter file name to download: ");
-   //scanf("%s", name);
-   //printf("Enter host id of destination: ");
-   //scanf("%d", &host_id);
+   printf("Enter file name to download: ");
+   scanf("%s", name);
+   printf("Enter host id of destination: ");
+   scanf("%d", &host_id);
    printf("\n");
 
    n = sprintf(msg, "u %d %s", host_id, name);

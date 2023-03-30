@@ -441,19 +441,15 @@ g_net_data = malloc(sizeof(struct net_data));
 // DEBUG: uncomment this so the network file can be dynamically chosen
 //////////////////////////////////////////////////////////////////////////////
 	/* Open network configuration file */
-//printf("Enter network data file: ");
-//scanf("%s", fname);
-//fp = fopen(fname, "r");
-//if (fp == NULL) { 
-//	printf("net.c: File did not open\n"); 
-//	return(0);
-//}
+printf("Enter network data file: ");
+scanf("%s", fname);
+fp = fopen(fname, "r");
+if (fp == NULL) { 
+	printf("net.c: File did not open\n"); 
+	return(0);
+}
 //////////////////////////////////////////////////////////////////////////////
 
-// DEBUG: del
-strcpy(fname, "socketTest.config");
-fp = fopen(fname, "r");
-//
 
 int i;
 int node_num;

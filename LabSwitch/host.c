@@ -336,11 +336,6 @@ void host_main(int host_id)
 char dir[MAX_DIR_NAME];
 int dir_valid = 0;
 
-// DEBUG (del)
-// /////////////////////////////////
-dir_valid = 1;
-strcpy(dir, (host_id==0) ? "t0":"t1");
-/////////////////////////////////////
 
 char man_msg[MAN_MSG_LENGTH];
 char man_reply_msg[MAN_MSG_LENGTH];
