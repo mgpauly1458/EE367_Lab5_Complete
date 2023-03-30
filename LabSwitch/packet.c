@@ -40,7 +40,13 @@ int i;
 	
 if (port->type == PIPE) {
 	n = read(port->pipe_recv_fd, msg, PAYLOAD_MAX+4);
-	if (n>0) {
+} else if(port->type == SOCKET) {
+   struct net_data **g_net_data_ptr = get_g_net_data();
+   struct net_data *g_net_data = *g_net_data_ptr;
+   n = read(g_net_data->server_pipe, msg, PAYLOAD_MAX+4);
+
+}
+   if (n>0) {
 		p->src = (char) msg[0];
 		p->dst = (char) msg[1];
 		p->type = (char) msg[2];
@@ -49,9 +55,6 @@ if (port->type == PIPE) {
 			p->payload[i] = msg[i+4];
 		}
 	}
-} else if(port->type == SOCKET) {
-   return 0;
-}
 
 return(n);
 }

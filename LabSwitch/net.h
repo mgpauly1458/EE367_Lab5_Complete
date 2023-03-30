@@ -16,4 +16,4 @@ struct net_data {
    int switch_host_id;
 };
 
-struct net_data* get_g_net_data();
+struct net_data** get_g_net_data();

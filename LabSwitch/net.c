@@ -79,8 +79,8 @@ static struct man_port_at_host *g_man_host_port_list = NULL;
 
 static struct net_data *g_net_data = NULL;
 
-struct net_data* get_g_net_data() {
-   return g_net_data;
+struct net_data** get_g_net_data() {
+   return &g_net_data;
 }
 /* 
  * Loads network configuration file and creates data structures
@@ -408,11 +408,14 @@ for (i=0; i<g_net_link_num; i++) {
 				fcntl(fd10[PIPE_READ], F_GETFL) | O_NONBLOCK);
 		p1->pipe_send_fd = fd10[PIPE_WRITE]; 
 		p0->pipe_recv_fd = fd10[PIPE_READ]; 
+      
+      p0->sock_host_id = -1;
+      p1->sock_host_id = -1;
 
 		p0->next = p1; /* Insert ports in linked lisst */
 		p1->next = g_port_list;
 		g_port_list = p0;
-
+      
 	}  else if(g_net_link[i].type == SOCKET) {
       p0 = (struct net_port *) malloc(sizeof(struct net_port));
       p0->type = g_net_link[i].type;

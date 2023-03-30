@@ -119,17 +119,12 @@ void switch_main(int host_id) {
       node_port_num++;
    }
    
-   // port list debug
-   printf("\n\nnode_port_num=%d\n\n", node_port_num);
-   
-
    node_port = (struct net_port **) malloc(node_port_num*sizeof(struct net_port *));
 
    // populate node_port
    p = node_port_list;
    for (k=0; k<node_port_num; k++) {
       node_port[k] = p;
-      display_port_info(p);
       p = p->next;
    
    }
@@ -141,11 +136,24 @@ void switch_main(int host_id) {
       // socket
    int fd[2];
    pid_t pid;
-   struct net_data *g_net_data = get_g_net_data();
-   g_net_data->server_pipe = fd[0];
+   struct net_data **g_net_data_ptr = get_g_net_data();
+   struct net_data *g_net_data = *g_net_data_ptr;
+   
        // Create the pipe
     if (pipe(fd) == -1) {
         perror("pipe");
+        exit(EXIT_FAILURE);
+    }
+      
+          // Set the read end of the pipe to non-blocking
+    if (fcntl(fd[0], F_SETFL, O_NONBLOCK) == -1) {
+        perror("fcntl");
+        exit(EXIT_FAILURE);
+    }
+
+    // Set the write end of the pipe to non-blocking
+    if (fcntl(fd[1], F_SETFL, O_NONBLOCK) == -1) {
+        perror("fcntl");
         exit(EXIT_FAILURE);
     }
 
@@ -173,31 +181,7 @@ void switch_main(int host_id) {
     else {
         // Close the write end of the pipe
       close(fd[1]);
-      g_net_data->server_port = fd[0];
-              // test packet
-        struct packet *p2 = malloc(sizeof(struct packet));
-        p2->src = 0;
-        p2->dst = 1;
-        p2->type = PKT_PING_REPLY;
-        p2->length = 11;
-        strncpy(p2->payload, "Hello World", p2->length);
-      
-        create_client(g_net_data->send_domain, g_net_data->send_port, p2);
-
-        // Read the message from the read end of the pipe
-        struct packet *p3 = malloc(sizeof(struct packet)); 
-        int n = receive_packet(g_net_data->server_port, p3);
-
-        // diplay the data
-        printf("client process data received = %d\n", n);
-        display_packet_info(p3); 
-        
-
-        // Close the read end of the pipe
-        close(fd[0]);
-         
-        // kill child process
-        kill(pid, SIGKILL);
+      g_net_data->server_pipe = fd[0];
    
    //main loop
       while(1) {
@@ -209,7 +193,8 @@ void switch_main(int host_id) {
             n = packet_recv(node_port[k], in_packet);
 
             if (n > 0) {
-            
+               printf("\ndata recvd in switch loop = %d\n", n);
+               display_packet_info(in_packet);
                display_forward_table(table);
                // add packet routing here
                // check whole table
