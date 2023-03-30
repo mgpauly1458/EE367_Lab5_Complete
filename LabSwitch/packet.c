@@ -9,7 +9,7 @@
 #include "packet.h"
 #include "net.h"
 #include "host.h"
-
+#include "sockets.h"
 
 void packet_send(struct net_port *port, struct packet *p)
 {
@@ -26,7 +26,9 @@ if (port->type == PIPE) {
 	}
 	write(port->pipe_send_fd, msg, p->length+4);
 } else if (port->type == SOCKET) {
-   return;
+   struct net_data **g_net_data_ptr = get_g_net_data();
+   struct net_data *g_net_data = *g_net_data_ptr;
+   create_client(g_net_data->send_domain, g_net_data->send_port, p);   
 }
 
 return;

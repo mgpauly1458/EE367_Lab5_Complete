@@ -6,6 +6,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <signal.h>
+#include <fcntl.h>
 
 #include "main.h"
 #include "host.h"
@@ -118,6 +119,18 @@ void create_client(char* domain_name, int port, struct packet* p) {
         exit(EXIT_FAILURE);
     }
 
+// Set the socket to non-blocking mode
+int flags = fcntl(client_fd, F_GETFL, 0);
+if (flags == -1) {
+    perror("fcntl");
+    exit(EXIT_FAILURE);
+}
+flags |= O_NONBLOCK;
+if (fcntl(client_fd, F_SETFL, flags) == -1) {
+    perror("fcntl");
+    exit(EXIT_FAILURE);
+}
+
     // Set up the server address structure
     server_address.sin_family = AF_INET;
     server_address.sin_addr = *((struct in_addr*)he->h_addr);
@@ -126,7 +139,6 @@ void create_client(char* domain_name, int port, struct packet* p) {
     // Connect to the server
     if (connect(client_fd, (struct sockaddr *)&server_address, sizeof(server_address)) < 0) {
         perror("connect");
-        exit(EXIT_FAILURE);
     }
 
     // Send the packet to the server

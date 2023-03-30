@@ -17,13 +17,13 @@ struct packet {
 
 void test_send_packet() {
     struct packet *p = malloc(sizeof(struct packet));
-    p->src = 4;
+    p->src = 3;
     p->dst = 0;
     p->type = 1;
     p->length = 12;
     strncpy(p->payload, "Hello world", p->length);
 
-    create_client("wiliki.eng.hawaii.edu", 3500, p);
+    create_client("wiliki.eng.hawaii.edu", 3502, p);
 
     printf("Packet sent.\n");
 }
