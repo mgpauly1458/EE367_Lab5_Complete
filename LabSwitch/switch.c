@@ -86,7 +86,8 @@ void add_src_to_table(struct forward_table *table, struct packet *pkt, int port_
 void send_to_all_ports(int node_port_num, struct net_port **node_port, struct packet *pkt) {
    for (int k = 0; k < node_port_num; k++) {
       packet_send(node_port[k], pkt);
-  }
+      display_port_info(node_port[k]);
+   }
   free(pkt);
 }
 
@@ -131,7 +132,7 @@ void switch_main(int host_id) {
 
    job_q_init(&job_q);
 
-   display_forward_table(table);
+  // display_forward_table(table);
 
       // socket
    int fd[2];
@@ -193,7 +194,9 @@ void switch_main(int host_id) {
             n = packet_recv(node_port[k], in_packet);
 
             if (n > 0) {
-               display_forward_table(table);
+               
+               // display_packet_info(in_packet); 
+//              display_forward_table(table);
                // add packet routing here
                // check whole table
                if(is_host_in_table(&table, in_packet->dst)) {

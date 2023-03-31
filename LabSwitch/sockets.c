@@ -10,7 +10,8 @@
 
 #include "main.h"
 #include "host.h"
-
+#include "net.h"
+#include "sockets.h"
 
 void send_packet(int pipe_fd, struct packet *p) {
     char msg[PAYLOAD_MAX+4];
@@ -92,7 +93,7 @@ void create_server(int port, int pipe_fd) {
         }
 
         // Read data from the client and send it to the pipe
-        char buffer[1024] = {0};
+        char buffer[PAYLOAD_MAX+4] = {0};
         int valread = read(client_fd, buffer, sizeof(buffer));
         write(pipe_fd, buffer, valread);
 
@@ -104,6 +105,7 @@ void create_server(int port, int pipe_fd) {
 void create_client(char* domain_name, int port, struct packet* p) {
     int client_fd;
     struct sockaddr_in server_address;
+
 
     // Resolve the domain name to an IP address
     struct hostent* he;

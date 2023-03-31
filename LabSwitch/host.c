@@ -36,6 +36,57 @@ struct file_buf {
 	FILE *fd;
 };
 
+void display_host_job_info(struct host_job *job, int hostid) {
+  const char* job_type_str;
+
+  switch (job->type) {
+    case JOB_SEND_PKT_ALL_PORTS:
+      job_type_str = "JOB_SEND_PKT_ALL_PORTS";
+      break;
+    case JOB_PING_SEND_REQ:
+      job_type_str = "JOB_PING_SEND_REQ";
+      break;
+    case JOB_PING_SEND_REPLY:
+      job_type_str = "JOB_PING_SEND_REPLY";
+      break;
+    case JOB_PING_WAIT_FOR_REPLY:
+      job_type_str = "JOB_PING_WAIT_FOR_REPLY";
+      break;
+    case JOB_FILE_DOWNLOAD_SEND:
+      job_type_str = "JOB_FILE_DOWNLOAD_SEND";
+      break;
+    case JOB_FILE_DOWNLOAD_RECV:
+      job_type_str = "JOB_FILE_DOWNLOAD_RECV";
+      break;
+    case JOB_FILE_UPLOAD_SEND:
+      job_type_str = "JOB_FILE_UPLOAD_SEND";
+      break;
+    case JOB_FILE_UPLOAD_RECV_START:
+      job_type_str = "JOB_FILE_UPLOAD_RECV_START";
+      break;
+    case JOB_FILE_UPLOAD_RECV_CONT:
+      job_type_str = "JOB_FILE_UPLOAD_RECV_CONT";
+      break;
+    case JOB_FILE_UPLOAD_RECV_END:
+      job_type_str = "JOB_FILE_UPLOAD_RECV_END";
+      break;
+    default:
+      job_type_str = "Unknown Job Type";
+  }
+
+  printf("\n\n\nHost Id: %d\n", hostid);
+  printf("\nJob Type: %s\n", job_type_str);
+  printf("Input Port Index: %d\n", job->in_port_index);
+  printf("Output Port Index: %d\n", job->out_port_index);
+  printf("Download Filename: %s\n", job->fname_download);
+  printf("Upload Filename: %s\n", job->fname_upload);
+  printf("Ping Timer: %d\n", job->ping_timer);
+  printf("File Upload Destination: %d\n", job->file_upload_dst);
+  printf("File Download Destination: %d\n", job->file_download_dst);
+  printf("Next Job: %p\n", job->next); // assuming next is a pointer
+   display_packet_info(job->packet);
+   printf("\n\n\n");
+}
 
 /*
  * File buffer operations
@@ -242,34 +293,6 @@ void display_job_number(struct job_queue *j) {
    printf("\nnumber of jobs = %d\n", job_q_num(j));
 }
 
-void display_host_job_info(struct host_job *job, int host_id) {
-   
-   printf("\n\n\nHostID: %d\n", host_id);
-
-   printf("\n\nJob Info:\n");
-   printf("Job type: %s\n", get_job_type_string(job->type));
-
-    if (job->packet != NULL) {
-        printf("Packet data: %s\n", job->packet->payload);
-    } else {
-        printf("Packet data: NULL\n");
-    }
-
-    printf("Input port index: %d\n", job->in_port_index);
-    printf("Output port index: %d\n", job->out_port_index);
-    printf("Download file name: %s\n", job->fname_download);
-    printf("Upload file name: %s\n", job->fname_upload);
-    printf("Ping timer: %d\n", job->ping_timer);
-    printf("File upload destination: %d\n", job->file_upload_dst);
-    printf("File download destination: %d\n", job->file_download_dst);
-    if (job->next != NULL) {
-        printf("Next job type: %s\n", get_job_type_string(job->next->type));
-    } else {
-        printf("Next job type: NULL\n");
-    }
-}
-
-
 void display_packet_info(struct packet *pkt) {
     const char* type_string;
     printf("\n\nPacket Info:\n");
@@ -388,7 +411,8 @@ node_port_num = 0;
 for (p=node_port_list; p!=NULL; p=p->next) {
 	node_port_num++;
 }
-	/* Create memory space for the array */
+
+/* Create memory space for the array */
 node_port = (struct net_port **) 
 	malloc(node_port_num*sizeof(struct net_port *));
 
@@ -569,6 +593,8 @@ while(1) {
 		/* Get a new job from the job queue */
 		new_job = job_q_remove(&job_q);
 
+      //if (host_id == 0)display_host_job_info(new_job, host_id);
+
 		/* Send packet on all ports */
 		switch(new_job->type) {
 
@@ -609,7 +635,6 @@ while(1) {
 
 		case JOB_PING_WAIT_FOR_REPLY:
 			/* Wait for a ping reply packet */
-
 			if (ping_reply_received == 1) {
 				n = sprintf(man_reply_msg, "Ping acked!"); 
 				man_reply_msg[n] = '\0';
