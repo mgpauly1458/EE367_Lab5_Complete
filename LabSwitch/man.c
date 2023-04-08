@@ -204,6 +204,7 @@ int host_id;
 char name[NAME_LENGTH];
 char msg[NAME_LENGTH];
 
+
 printf("Enter file name to upload: ");
 scanf("%s", name);
 printf("Enter host id of destination:  ");
@@ -215,32 +216,20 @@ write(curr_host->send_fd, msg, n);
 usleep(TENMILLISEC);
 }
 
-////// Implement File Download ////////
-/* 
- * Request a file from another host
- *
- * User is asked for
- *    - filename to download from the othe host
- *    - id of the host to ping
- *
- * A command message s sent to the current host
- *    The message sent is 'd' "dst host id" "filename"
- */
 int file_download(struct man_port_at_man *curr_host) {
    int n;
    int host_id;
    char name[NAME_LENGTH];
    char msg[NAME_LENGTH];
 
-   // Prompt user for the file and src
-   printf("Enter a file name to download: ");
+
+   printf("Enter file name to download: ");
    scanf("%s", name);
-   printf("Enter a host id of source: ");
-   scanf("%s", &host_id);
+   printf("Enter host id of destination: ");
+   scanf("%d", &host_id);
    printf("\n");
 
-   // Create the string cmd to download the file
-   n = sprintf(msg, "d %d %s", host_id, name);
+   n = sprintf(msg, "u %d %s", host_id, name);
    write(curr_host->send_fd, msg, n);
    usleep(TENMILLISEC);
 }
@@ -288,8 +277,8 @@ while(1) {
 			file_upload(curr_host);
 			break;
 		case 'd': /* Download a file from a host */
-         file_download(curr_host);
-			break;
+			file_download(curr_host);
+         break;
 		case 'q':  /* Quit */
 			return;
 		default: 

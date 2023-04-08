@@ -8,4 +8,12 @@ struct man_port_at_host *net_get_host_port(int host_id);
 struct net_node *net_get_node_list();
 struct net_port *net_get_port_list(int host_id);
 
+struct net_data {
+   int send_port;
+   int server_port;
+   int server_pipe;
+   char send_domain[100];
+   int switch_host_id;
+};
 
+struct net_data** get_g_net_data();

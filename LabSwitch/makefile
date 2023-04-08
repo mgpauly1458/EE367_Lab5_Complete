@@ -1,7 +1,7 @@
 # Make file
 
-net367: host.o switch.o packet.o man.o main.o net.o
-	gcc -o net367 host.o switch.o man.o main.o net.o packet.o
+net367: sockets.o host.o switch.o packet.o man.o main.o net.o
+	gcc -o net367 sockets.o host.o switch.o man.o main.o net.o packet.o
 
 main.o: main.c
 	gcc -c main.c
@@ -20,6 +20,9 @@ packet.o:  packet.c
 
 switch.o: switch.c
 	gcc -c switch.c
+
+sockets.o: sockets.c
+	gcc -c sockets.c
 
 clean:
 	rm *.o

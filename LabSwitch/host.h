@@ -7,11 +7,12 @@ enum host_job_type {
 	JOB_PING_SEND_REQ,	
 	JOB_PING_SEND_REPLY,
 	JOB_PING_WAIT_FOR_REPLY,
-	JOB_FILE_UPLOAD_SEND,
+	JOB_FILE_DOWNLOAD_SEND,
+   JOB_FILE_DOWNLOAD_RECV,
+   JOB_FILE_UPLOAD_SEND,
 	JOB_FILE_UPLOAD_RECV_START,
-	JOB_FILE_UPLOAD_RECV_END,
-   JOB_FILE_DOWNLOAD_SEND,
-   JOB_FILE_DOWNLOAD_RECV
+	JOB_FILE_UPLOAD_RECV_CONT,
+   JOB_FILE_UPLOAD_RECV_END
 };
 
 struct host_job {
@@ -23,8 +24,8 @@ struct host_job {
 	char fname_upload[100];
 	int ping_timer;
 	int file_upload_dst;
-	struct host_job *next;
-   int file_download_src;
+	int file_download_dst;
+   struct host_job *next;
 };
 
 
@@ -35,11 +36,5 @@ struct job_queue {
 };
 
 void host_main(int host_id);
-
-// Functions to use from host.c
-void job_q_add(struct job_queue *j_q, struct host_job *j);
-void job_q_init(struct job_queue *j_q);
-int job_q_num(struct job_queue *j_q);
-struct host_job *job_q_remove(struct job_queue *j_q);
-
-
+void display_packet_info(struct packet *);
+void display_host_job_info(struct host_job*, int);

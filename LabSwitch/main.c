@@ -46,9 +46,9 @@ for (p_node = node_list; p_node != NULL; p_node = p_node->next) {
 			host_main(p_node->id);
 		}
 		else if (p_node->type = SWITCH) {
-			/* Execute switch routine, which you have to write */
-		   switch_main(p_node->id);
-      }
+			switch_main(p_node->id);
+         /* Execute switch routine, which you have to write */
+		}
 		return;
 	}  
 }

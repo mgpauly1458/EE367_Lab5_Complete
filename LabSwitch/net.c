@@ -77,6 +77,11 @@ static struct net_port *g_port_list = NULL;
 static struct man_port_at_man *g_man_man_port_list = NULL;
 static struct man_port_at_host *g_man_host_port_list = NULL;
 
+static struct net_data *g_net_data = NULL;
+
+struct net_data** get_g_net_data() {
+   return &g_net_data;
+}
 /* 
  * Loads network configuration file and creates data structures
  * for nodes and links.  The results are accessible through
@@ -139,7 +144,7 @@ r = NULL;
 p = &g_port_list;
 
 while (*p != NULL) {
-	if ((*p)->pipe_host_id == host_id) {
+	if ((*p)->pipe_host_id == host_id || (*p)->sock_host_id == host_id ) {
 		t = *p;	
 		*p = (*p)->next;
 		t->next = r;
@@ -350,7 +355,7 @@ int i;
 g_node_list = NULL;
 for (i=0; i<g_net_node_num; i++) {
 	p = (struct net_node *) malloc(sizeof(struct net_node));
-	p->id = i;
+	p->id = g_net_node[i].id;
 	p->type = g_net_node[i].type;
 	p->next = g_node_list;
 	g_node_list = p;
@@ -403,12 +408,23 @@ for (i=0; i<g_net_link_num; i++) {
 				fcntl(fd10[PIPE_READ], F_GETFL) | O_NONBLOCK);
 		p1->pipe_send_fd = fd10[PIPE_WRITE]; 
 		p0->pipe_recv_fd = fd10[PIPE_READ]; 
+      
+      p0->sock_host_id = -1;
+      p1->sock_host_id = -1;
 
 		p0->next = p1; /* Insert ports in linked lisst */
 		p1->next = g_port_list;
 		g_port_list = p0;
+      
+	}  else if(g_net_link[i].type == SOCKET) {
+      p0 = (struct net_port *) malloc(sizeof(struct net_port));
+      p0->type = g_net_link[i].type;
+      p0->sock_host_id = g_net_data->switch_host_id;
+      
+      p0->next = g_port_list;
+      g_port_list = p0;
+   }
 
-	}
 }
 
 }
@@ -421,8 +437,9 @@ int load_net_data_file()
 {
 FILE *fp;
 char fname[MAX_FILE_NAME];
+g_net_data = malloc(sizeof(struct net_data));
 
-	/* Open network configuration file */
+/* Open network configuration file */
 printf("Enter network data file: ");
 scanf("%s", fname);
 fp = fopen(fname, "r");
@@ -430,6 +447,7 @@ if (fp == NULL) {
 	printf("net.c: File did not open\n"); 
 	return(0);
 }
+
 
 int i;
 int node_num;
@@ -457,28 +475,29 @@ else {
 	g_net_node =(struct net_node*) malloc(sizeof(struct net_node)*node_num);
 	for (i=0; i<node_num; i++) { 
 		fscanf(fp, " %c ", &node_type);
-      // If node is a host node
 		if (node_type == 'H') {
-			fscanf(fp, " %d ", &node_id);
+         fscanf(fp, " %d ", &node_id);
 			g_net_node[i].type = HOST;
 			g_net_node[i].id = node_id;
 		}
-      // If node is a switch node
-      else if (node_type == 'S') {
+		else if (node_type == 'S') {
          fscanf(fp, " %d ", &node_id);
          g_net_node[i].type = SWITCH;
          g_net_node[i].id = node_id;
+         g_net_data->switch_host_id = node_id;
       }
-		else {
+
+      else {
 			printf(" net.c: Unidentified Node Type\n");
 		}
 
-		if (i != node_id) {
-			printf(" net.c: Incorrect node id\n");
-			fclose(fp);
-			return(0);
-		}
-	}
+	//	if (i != node_id) {
+	//		printf(" net.c: Incorrect node id\n");
+	//		fclose(fp);
+	//		return(0);
+	//	}
+	
+   }
 }
 	/* 
 	 * Read link information from the file and
@@ -492,6 +511,10 @@ else {
 int link_num;
 char link_type;
 int node0, node1;
+int server_port;
+int send_port;
+char send_domain[100];
+char server_domain[100];
 
 fscanf(fp, " %d ", &link_num);
 printf("Number of links = %d\n", link_num);
@@ -511,7 +534,15 @@ else {
 			g_net_link[i].type = PIPE;
 			g_net_link[i].pipe_node0 = node0;
 			g_net_link[i].pipe_node1 = node1;
-		}
+		} else if (link_type == 'S') {
+         fscanf(fp, " %d %s %d %s %d ", &node0, send_domain, &send_port, server_domain, &server_port);
+         g_net_link[i].type = SOCKET;
+
+         g_net_data->send_port = send_port;
+         g_net_data->server_port = server_port;
+         strcpy(g_net_data->send_domain, send_domain);
+      } 
+
 		else {
 			printf("   net.c: Unidentified link type\n");
 		}
