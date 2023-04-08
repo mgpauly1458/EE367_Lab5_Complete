@@ -86,7 +86,6 @@ void add_src_to_table(struct forward_table *table, struct packet *pkt, int port_
 void send_to_all_ports(int node_port_num, struct net_port **node_port, struct packet *pkt) {
    for (int k = 0; k < node_port_num; k++) {
       packet_send(node_port[k], pkt);
-      display_port_info(node_port[k]);
    }
   free(pkt);
 }

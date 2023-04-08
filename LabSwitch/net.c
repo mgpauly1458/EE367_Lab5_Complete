@@ -355,7 +355,7 @@ int i;
 g_node_list = NULL;
 for (i=0; i<g_net_node_num; i++) {
 	p = (struct net_node *) malloc(sizeof(struct net_node));
-	p->id = i;
+	p->id = g_net_node[i].id;
 	p->type = g_net_node[i].type;
 	p->next = g_node_list;
 	g_node_list = p;
@@ -438,9 +438,8 @@ int load_net_data_file()
 FILE *fp;
 char fname[MAX_FILE_NAME];
 g_net_data = malloc(sizeof(struct net_data));
-// DEBUG: uncomment this so the network file can be dynamically chosen
-//////////////////////////////////////////////////////////////////////////////
-	/* Open network configuration file */
+
+/* Open network configuration file */
 printf("Enter network data file: ");
 scanf("%s", fname);
 fp = fopen(fname, "r");
@@ -448,7 +447,6 @@ if (fp == NULL) {
 	printf("net.c: File did not open\n"); 
 	return(0);
 }
-//////////////////////////////////////////////////////////////////////////////
 
 
 int i;
@@ -493,12 +491,13 @@ else {
 			printf(" net.c: Unidentified Node Type\n");
 		}
 
-		if (i != node_id) {
-			printf(" net.c: Incorrect node id\n");
-			fclose(fp);
-			return(0);
-		}
-	}
+	//	if (i != node_id) {
+	//		printf(" net.c: Incorrect node id\n");
+	//		fclose(fp);
+	//		return(0);
+	//	}
+	
+   }
 }
 	/* 
 	 * Read link information from the file and
@@ -537,7 +536,6 @@ else {
 			g_net_link[i].pipe_node1 = node1;
 		} else if (link_type == 'S') {
          fscanf(fp, " %d %s %d %s %d ", &node0, send_domain, &send_port, server_domain, &server_port);
-        // printf("\n\nnode0=%d send_domain=%s, send_port=%d server_domain=%s server_port=%d\n", node0, send_domain, send_port, server_domain, server_port);
          g_net_link[i].type = SOCKET;
 
          g_net_data->send_port = send_port;
